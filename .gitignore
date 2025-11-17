@@ -1,0 +1,90 @@
+# Node & Bun
+bun.lockb
+node_modules
+bunfig.toml
+.DS_Store
+
+# Environment files (never commit)
+.env*
+/apps/web/.env*
+/apps/extension/.env*
+
+# Build outputs and caches
+/apps/extension/dist
+/apps/extension/build
+/apps/extension/build.zip
+/apps/web/.next/
+/apps/web/out/
+/packages/shared/dist
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Coverage and testing
+/coverage
+*.lcov
+.nyc_output
+
+# TypeScript build info
+*.tsbuildinfo
+/apps/web/next-env.d.ts
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache
+
+# Package manager caches
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+.npm/
+
+# Framework specific
+.vercel/
+.netlify/
+
+# Development artifacts
+/apps/extension/utils/reload/initReloadServer.js
+/apps/extension/utils/reload/injections/script.js
+/apps/extension/utils/reload/injections/view.js
+
+# Backup files
+**/*.backup.*
+**/*.back.*
+
+# Extension specific
+psd
+thumb
+sketch
+
+# ESLint cache
+.eslintcache
+
+# Stylelint cache
+.stylelintcache

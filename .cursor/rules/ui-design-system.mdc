@@ -1,0 +1,173 @@
+---
+description: Vision OS design system guidelines and UI patterns
+globs: *.tsx,*.ts
+---
+
+# UI Design System - Vision OS Aesthetic
+
+## Design Principles
+
+### Glassmorphism
+
+- Use `backdrop-blur-xl` for glass effect
+- Translucent backgrounds: `bg-white/95` and `dark:bg-neutral-800/95`
+- Subtle borders: `border-neutral-200/50` and `dark:border-neutral-700/50`
+- Layered shadows: `shadow-lg shadow-neutral-900/5`
+
+### Color System
+
+- **Base Colors**: Use neutral scale (50-950)
+- **Dark Mode**: Always provide dark: variants for colored elements
+- **Extension Brand**: Use `eb-` prefix for brand colors (eb-500, eb-600, etc.)
+- **Semantic Colors**: green (success), red (error/delete), blue (selection), purple (image)
+
+### Spacing & Layout
+
+- **Rounded Corners**: `rounded-2xl` for cards, `rounded-lg` for inputs/buttons
+- **Padding**: `p-6` for cards, `px-3 py-2` for inputs
+- **Gaps**: `gap-2` to `gap-4` for flex/grid layouts
+- **Min Heights**: Use min-h to prevent layout shift during animations
+
+## Component Patterns
+
+### Cards
+
+```tsx
+<div className={cn(
+  'rounded-2xl border p-6',
+  'bg-white/95 backdrop-blur-xl',
+  'border-neutral-200/50 shadow-lg shadow-neutral-900/5',
+  'dark:border-neutral-700/50 dark:bg-neutral-800/95',
+  'transition-all duration-300'
+)}>
+```
+
+### Inputs
+
+```tsx
+<input
+  className={cn(
+    'w-full rounded-lg border border-neutral-200/50',
+    'bg-white/50 px-3 py-2 text-sm',
+    'focus:border-eb-500 focus:ring-eb-500/20 focus:outline-none focus:ring-2',
+    'dark:border-neutral-700/50 dark:bg-neutral-800/50',
+  )}
+/>
+```
+
+### Buttons (FAB)
+
+```tsx
+<button className={cn(
+  'fixed bottom-6 right-6 z-50',
+  'flex h-14 w-14 items-center justify-center',
+  'rounded-full bg-eb-600 text-white',
+  'shadow-2xl shadow-eb-600/30',
+  'dark:bg-eb-500 dark:shadow-eb-500/30'
+)}>
+```
+
+### Toggle Switch
+
+```tsx
+<button
+  className={cn(
+    'relative inline-flex h-6 w-11 items-center rounded-full',
+    'transition-colors duration-200',
+    enabled ? 'bg-eb-600 dark:bg-eb-500' : 'bg-neutral-300 dark:bg-neutral-600',
+  )}
+>
+  <span
+    className={cn(
+      'inline-block h-4 w-4 rounded-full bg-white shadow-lg',
+      'transition-transform duration-200',
+      enabled ? 'translate-x-6' : 'translate-x-1',
+    )}
+  />
+</button>
+```
+
+## Animation Guidelines
+
+### **NO Spring Animations**
+
+- Never use `type: 'spring'` in Framer Motion
+- Spring physics creates unnatural bounce effects
+- Use cubic-bezier easing curves instead
+
+### Cubic-Bezier Easing
+
+- **Material Design**: `[0.4, 0.0, 0.2, 1]` - Standard easing
+- **Custom Natural**: `[0.25, 0.46, 0.45, 0.94]` - Smooth acceleration/deceleration
+- **Duration**: 0.6s - 0.8s for complex animations, 0.3s for simple transitions
+
+### New Item Animation Pattern
+
+```tsx
+<motion.div
+  initial={
+    isNewlyAdded
+      ? {
+          opacity: 0,
+          scale: 0.85,
+          y: 20,
+          filter: 'blur(10px)',
+        }
+      : false
+  }
+  animate={
+    isNewlyAdded
+      ? {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          filter: 'blur(0px)',
+        }
+      : undefined
+  }
+  transition={{
+    duration: 0.8,
+    ease: [0.25, 0.46, 0.45, 0.94],
+    filter: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
+  }}
+/>
+```
+
+### Layout Stability
+
+- Use `min-h-[XXXpx]` on animated items to prevent layout shift
+- Apply `layout` prop on motion.div for reordering animations
+- Use `AnimatePresence` with `mode="sync"` for list animations
+
+## Tab System
+
+### Tab Navigation
+
+- Two tabs: "Text Search" and "Image Search"
+- Active tab: `border-eb-600 text-eb-600 dark:border-eb-400`
+- Inactive tab: `border-transparent text-neutral-600 hover:text-neutral-900`
+- **Scroll Reset**: Always reset scroll to top when switching tabs
+
+### Tab Content
+
+- Filter engines by `activeTab` context type
+- Each tab shows only relevant engines (selection vs image)
+- Independent scroll positions (but reset on switch)
+
+## UI Patterns to Avoid
+
+❌ **Don't Use:**
+
+- Spring animations (bouncy, unnatural)
+- Context type badges in cards (tabs already show this)
+- Icon pickers (Chrome doesn't support custom context menu icons)
+- Modal dialogs for inline actions
+- Abrupt animations without easing
+
+✅ **Do Use:**
+
+- Cubic-bezier easing curves
+- Inline editing and confirmation
+- Floating action buttons
+- Blur + scale + translate animations
+- Glassmorphism and backdrop blur

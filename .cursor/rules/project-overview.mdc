@@ -1,0 +1,45 @@
+---
+alwaysApply: true
+description: Core project architecture and technology stack
+---
+
+# Right Click Search Extension - Project Overview
+
+## Project Type
+
+Chrome Extension (Manifest V3) - Customizable right-click context menu search engine manager
+
+## Core Technologies
+
+- **React 19** - UI framework with modern hooks
+- **TypeScript 5** - Type-safe development
+- **Vite 7** - Build tool with HMR
+- **TailwindCSS 3.4** - Utility-first styling
+- **Framer Motion** - Premium animations
+- **Chrome Extensions API** - Context menus, storage, tabs
+
+## Architecture
+
+### Key Components
+
+- **[Main.tsx](mdc:src/components/views/Main.tsx)** - Primary UI with tab-based organization
+- **[SearchEngineCard.tsx](mdc:src/components/search/SearchEngineCard.tsx)** - Individual search engine configuration cards
+- **[background/index.ts](mdc:src/pages/background/index.ts)** - ContextMenuManager for right-click menu handling
+- **[searchEnginesStorage.ts](mdc:src/shared/storages/searchEnginesStorage.ts)** - Chrome storage persistence layer
+- **[useSearchEngines.ts](mdc:src/hooks/useSearchEngines.ts)** - React hook for engine state management
+
+### Data Flow
+
+1. User configures engines in popup UI ([Main.tsx](mdc:src/components/views/Main.tsx))
+2. Changes saved to Chrome Storage via [searchEnginesStorage.ts](mdc:src/shared/storages/searchEnginesStorage.ts)
+3. Background script ([background/index.ts](mdc:src/pages/background/index.ts)) listens for storage changes
+4. Context menu dynamically updates with enabled engines
+5. User right-clicks → selects engine → new tab opens with search results
+
+## Design Philosophy
+
+- **Vision OS Inspired**: Glassmorphism, backdrop blur, translucent backgrounds
+- **Minimalist**: Clean, uncluttered interface
+- **Tab-Based**: Separate Text Search and Image Search engines
+- **Inline Editing**: Direct field editing without modals
+- **Instant Feedback**: Real-time sync between UI and context menu

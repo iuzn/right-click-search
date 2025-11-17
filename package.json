@@ -1,0 +1,33 @@
+{
+  "name": "right-click-search-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "install:all": "bun install",
+    "dev": "run-p dev:web dev:extension",
+    "dev:web": "cd apps/web && bun run dev",
+    "dev:extension": "cd apps/extension && bun run dev",
+    "build": "bun run build:web && bun run build:extension",
+    "build:web": "cd apps/web && bun run build",
+    "build:extension": "cd apps/extension && bun run build",
+    "build:extension:dev": "cd apps/extension && bun run build:dev",
+    "build:extension:firefox": "cd apps/extension && bun run build:firefox",
+    "build:extension:watch": "cd apps/extension && bun run build:watch",
+    "lint": "bun run lint:web && bun run lint:extension",
+    "lint:web": "cd apps/web && bun run lint",
+    "lint:extension": "cd apps/extension && bun run lint",
+    "type-check": "bun run type-check:web && bun run type-check:extension",
+    "type-check:web": "cd apps/web && bun run type-check",
+    "type-check:extension": "cd apps/extension && bun run type-check",
+    "clean": "bun run clean:web && bun run clean:extension",
+    "clean:web": "rm -rf apps/web/.next apps/web/out",
+    "clean:extension": "rm -rf apps/extension/dist apps/extension/build",
+    "test": "echo 'No tests configured yet'"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}

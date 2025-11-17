@@ -1,0 +1,473 @@
+---
+description: Search engine feature implementation and patterns
+---
+
+# Search Engine Feature - Implementation Guide
+
+## Feature Overview
+
+The Right Click Search extension allows users to:
+
+1. Configure custom search engines via popup UI
+2. Right-click selected text or images
+3. Choose search engine from context menu
+4. Open search results in new tab
+
+## Data Structure
+
+### SearchEngine Interface
+
+Located in [src/types/search.ts](mdc:src/types/search.ts):
+
+```typescript
+export interface SearchEngine {
+  id: string; // Unique identifier (custom-TIMESTAMP or default-NAME)
+  title: string; // Display name in context menu
+  url: string; // Search URL with %s placeholder
+  icon: string; // Emoji or URL (not used in context menu)
+  iconType: 'emoji' | 'url'; // Icon type (legacy, not displayed)
+  contexts: ContextType[]; // ['selection'] or ['image']
+  enabled: boolean; // Show in context menu
+  isDefault: boolean; // Prevent deletion
+  createdAt: number; // Timestamp
+  updatedAt: number; // Timestamp
+}
+
+export type ContextType = 'selection' | 'image' | 'link' | 'page';
+```
+
+### Default Engines
+
+Defined in [src/lib/defaultSearchEngines.ts](mdc:src/lib/defaultSearchEngines.ts):
+
+```typescript
+export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
+  {
+    id: 'default-youtube-text',
+    title: 'Search on YouTube',
+    url: 'https://www.youtube.com/results?search_query=%s',
+    icon: '🎬',
+    iconType: 'emoji',
+    contexts: ['selection'],
+    enabled: true,
+    isDefault: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+  {
+    id: 'default-google-image',
+    title: 'Search Image on Google',
+    url: 'https://lens.google.com/uploadbyurl?url=%s',
+    icon: '🖼️',
+    iconType: 'emoji',
+    contexts: ['image'],
+    enabled: true,
+    isDefault: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+];
+```
+
+## Storage Management
+
+### searchEnginesStorage.ts
+
+Located in [src/shared/storages/searchEnginesStorage.ts](mdc:src/shared/storages/searchEnginesStorage.ts):
+
+**Key Methods:**
+
+- `add(params)` - Add new search engine
+- `update(id, params)` - Update existing engine
+- `remove(id)` - Delete engine
+- `toggleEnabled(id)` - Toggle enabled state
+- `reset()` - Restore defaults
+- `export()` - Download JSON config
+- `import(file)` - Upload JSON config
+
+**Storage Key:** `'search-engines-storage-key'`
+
+**Storage Type:** `chrome.storage.sync` (cross-device sync)
+
+## UI Components
+
+### Main.tsx
+
+Primary interface in [src/components/views/Main.tsx](mdc:src/components/views/Main.tsx):
+
+**Features:**
+
+- Tab navigation (Text Search / Image Search)
+- Floating Action Button for adding engines
+- Hamburger menu for import/export
+- Scroll reset on tab change
+- Real-time engine list
+
+**State Management:**
+
+```typescript
+const [activeTab, setActiveTab] = useState<'selection' | 'image'>('selection');
+const [showMenu, setShowMenu] = useState(false);
+const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
+const [notification, setNotification] = useState<{
+  message: string;
+  type: 'success' | 'error';
+} | null>(null);
+```
+
+**Tab Filtering:**
+
+```typescript
+const filteredEngines = engines.filter((engine) =>
+  engine.contexts.includes(activeTab),
+);
+```
+
+**Scroll Reset:**
+
+```typescript
+useEffect(() => {
+  const scrollContainer = document.querySelector('[data-scroll-container]');
+  if (scrollContainer) {
+    scrollContainer.scrollTop = 0;
+  }
+}, [activeTab]);
+```
+
+### SearchEngineCard.tsx
+
+Individual engine card in [src/components/search/SearchEngineCard.tsx](mdc:src/components/search/SearchEngineCard.tsx):
+
+**Features:**
+
+- Inline title editing
+- Inline URL editing
+- Enable/disable toggle
+- Delete with inline confirmation
+- Minimum height for layout stability
+
+**Delete Confirmation Pattern:**
+
+```typescript
+const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+// First click: show confirmation
+<button onClick={() => setShowDeleteConfirm(true)}>Delete</button>
+
+// Confirmation UI
+{showDeleteConfirm && (
+  <div>
+    <span>Are you sure?</span>
+    <button onClick={() => { onDelete(id); setShowDeleteConfirm(false); }}>✓</button>
+    <button onClick={() => setShowDeleteConfirm(false)}>✕</button>
+  </div>
+)}
+```
+
+**Animation for New Items:**
+
+```typescript
+<motion.div
+  initial={isNewlyAdded ? { opacity: 0, scale: 0.85, y: 20, filter: 'blur(10px)' } : false}
+  animate={isNewlyAdded ? { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' } : undefined}
+  transition={{
+    duration: 0.8,
+    ease: [0.25, 0.46, 0.45, 0.94],
+    filter: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+  }}
+  className="min-h-[160px]"
+/>
+```
+
+## Background Script
+
+### ContextMenuManager
+
+Located in [src/pages/background/index.ts](mdc:src/pages/background/index.ts):
+
+**Responsibilities:**
+
+- Load engines from storage on init
+- Create context menu items for enabled engines
+- Listen for storage changes and update menus
+- Handle context menu clicks
+- Open search results in new tabs
+
+**Key Methods:**
+
+```typescript
+class ContextMenuManager {
+  private engines: SearchEngine[] = [];
+
+  // Initialization
+  private async init() {
+    await this.loadEngines();
+    await this.createAllMenus();
+
+    // Listen for storage changes
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'sync' && changes['search-engines-storage-key']) {
+        this.engines = changes['search-engines-storage-key'].newValue || [];
+        this.updateAllMenus();
+      }
+    });
+
+    // Handle menu clicks
+    chrome.contextMenus.onClicked.addListener((info, tab) => {
+      this.handleMenuClick(info, tab);
+    });
+  }
+
+  // Create menu item
+  private createMenu(engine: SearchEngine) {
+    chrome.contextMenus.create({
+      id: engine.id,
+      title: engine.title, // No icon - Chrome limitation
+      // @ts-ignore - Chrome API type is too strict
+      contexts: engine.contexts,
+    });
+  }
+
+  // Handle click
+  private handleMenuClick(
+    info: chrome.contextMenus.OnClickData,
+    tab?: chrome.tabs.Tab,
+  ) {
+    const engine = this.engines.find((e) => e.id === info.menuItemId);
+    if (!engine) return;
+
+    let searchUrl: string | null = null;
+
+    // Image search
+    if (info.mediaType === 'image' && info.srcUrl) {
+      searchUrl = engine.url.replace('%s', encodeURIComponent(info.srcUrl));
+    }
+    // Text search
+    else if (info.selectionText) {
+      searchUrl = engine.url.replace(
+        '%s',
+        encodeURIComponent(info.selectionText),
+      );
+    }
+
+    if (searchUrl) {
+      chrome.tabs.create({ url: searchUrl });
+    }
+  }
+}
+```
+
+## Custom Hooks
+
+### useSearchEngines
+
+Located in [src/hooks/useSearchEngines.ts](mdc:src/hooks/useSearchEngines.ts):
+
+**Provides:**
+
+```typescript
+const {
+  engines, // Current engine list
+  isLoading, // Loading state
+  addEngine, // Add new engine
+  updateEngine, // Update engine
+  removeEngine, // Delete engine
+  toggleEngine, // Toggle enabled
+  resetEngines, // Restore defaults
+  exportEngines, // Download config
+  importEngines, // Upload config
+} = useSearchEngines();
+```
+
+**Implementation Pattern:**
+
+```typescript
+export function useSearchEngines() {
+  const [engines, setEngines] = useState<SearchEngine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEngines = async () => {
+      setIsLoading(true);
+      const fetched = await searchEnginesStorage.get();
+      setEngines(fetched);
+      setIsLoading(false);
+    };
+
+    fetchEngines();
+
+    // Subscribe to changes
+    const unsubscribe = searchEnginesStorage.subscribe(() => {
+      searchEnginesStorage.get().then(setEngines);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // CRUD operations delegate to storage
+  const addEngine = async (params: CreateSearchEngineParams) => {
+    return await searchEnginesStorage.add(params);
+  };
+
+  return { engines, isLoading, addEngine, ... };
+}
+```
+
+## URL Pattern Format
+
+### Text Search
+
+Replace `%s` with URL-encoded selected text:
+
+```
+https://www.google.com/search?q=%s
+https://www.youtube.com/results?search_query=%s
+https://github.com/search?q=%s
+https://stackoverflow.com/search?q=%s
+```
+
+### Image Search
+
+Replace `%s` with URL-encoded image URL:
+
+```
+https://lens.google.com/uploadbyurl?url=%s
+https://www.google.com/searchbyimage?image_url=%s
+```
+
+### URL Encoding
+
+Always use `encodeURIComponent()` for search terms:
+
+```typescript
+const searchUrl = engine.url.replace('%s', encodeURIComponent(searchTerm));
+```
+
+## Common Patterns
+
+### Adding New Engine
+
+```typescript
+const handleAddEngine = async () => {
+  const newEngine: CreateSearchEngineParams = {
+    title: activeTab === 'selection' ? 'New Text Search' : 'New Image Search',
+    url: 'https://www.google.com/search?q=%s',
+    icon: '🔍',
+    iconType: 'emoji',
+    enabled: true,
+    isDefault: false,
+    contexts: [activeTab],
+  };
+
+  const addedEngine = await addEngine(newEngine);
+  setNewlyAddedId(addedEngine.id);
+
+  // Auto-focus title input
+  setTimeout(() => {
+    const input = document.querySelector(
+      `input[type="text"]`,
+    ) as HTMLInputElement;
+    input?.focus();
+    input?.select();
+  }, 100);
+};
+```
+
+### Updating Engine
+
+```typescript
+const handleUpdate = async (id: string, params: UpdateSearchEngineParams) => {
+  await updateEngine(id, params);
+  // Storage subscription automatically updates UI
+};
+```
+
+### Import/Export
+
+```typescript
+// Export
+const handleExport = () => {
+  exportEngines(); // Downloads JSON file
+  showNotification('Settings exported!', 'success');
+};
+
+// Import
+const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const result = await importEngines(file);
+  if (result.success) {
+    showNotification('Settings imported!', 'success');
+  } else {
+    showNotification(`Import failed: ${result.error}`, 'error');
+  }
+};
+```
+
+## Validation Rules
+
+### Engine Validation
+
+```typescript
+const isValid = data.every(
+  (item) =>
+    item.id &&
+    item.title &&
+    item.url &&
+    item.icon &&
+    item.iconType &&
+    Array.isArray(item.contexts) &&
+    typeof item.enabled === 'boolean' &&
+    typeof item.isDefault === 'boolean',
+);
+```
+
+### URL Pattern Validation
+
+- Must contain `%s` placeholder
+- Should be valid URL format
+- Encode special characters properly
+
+## Known Limitations
+
+### Chrome API Constraints
+
+- **No Custom Icons**: Context menu items show title only (no emoji/images)
+- **Menu Hierarchy**: Limited nesting depth
+- **Update Delay**: Small delay when updating menu items
+
+### Storage Constraints
+
+- **Sync Quota**: 100KB total for all sync storage
+- **Item Size**: 8KB per item
+- **Write Quota**: Limited writes per hour
+
+### UI Constraints
+
+- **Fixed Height**: Popup limited to 600px height
+- **No External Resources**: All assets must be bundled
+- **Dark Mode**: Must manually implement (no system preference API)
+
+## Troubleshooting
+
+### Context Menu Not Showing
+
+1. Check background script console
+2. Verify engines are enabled
+3. Ensure contexts match action (selection/image)
+4. Reload extension
+
+### Storage Not Syncing
+
+1. Check chrome.storage.sync permissions
+2. Verify storage quota not exceeded
+3. Check for validation errors
+4. Inspect storage in DevTools
+
+### Animation Issues
+
+1. Verify cubic-bezier easing is used
+2. Check min-height on animated elements
+3. Ensure isNewlyAdded prop is set correctly
+4. Confirm transition duration is reasonable (0.6-0.8s)

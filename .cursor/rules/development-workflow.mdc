@@ -1,0 +1,262 @@
+---
+description: Development workflow, testing, and debugging guidelines
+---
+
+# Development Workflow
+
+## Step-by-Step Approach
+
+When implementing features or fixing bugs, follow this systematic approach:
+
+1. **Understand Requirements**
+   - Read the full user request carefully
+   - Identify all affected files and components
+   - Check existing implementations before creating new ones
+
+2. **Plan Changes**
+   - List all files that need modification
+   - Identify potential side effects
+   - Consider backward compatibility
+
+3. **Implement Changes**
+   - Make one logical change at a time
+   - Test each change before moving to the next
+   - Keep changes focused and minimal
+
+4. **Verify Results**
+   - Run build to check for TypeScript errors
+   - Test in Chrome extension environment
+   - Verify UI/UX matches requirements
+
+5. **Document Changes**
+   - Update comments if logic changes
+   - Update README if features change
+   - Maintain clear commit history
+
+## Build and Development
+
+### Development Server
+
+```bash
+# Start dev server with HMR
+bun dev
+
+# Build and watch for changes
+bun build:watch
+```
+
+### Production Build
+
+```bash
+# Build for production
+bun build
+
+# Verify build output
+ls -la build/
+
+# Check manifest.json
+cat build/manifest.json
+```
+
+### Build Script
+
+```bash
+# One-command build and zip
+bash build.sh
+
+# Output: right-click-search-v0.0.1-20250116.zip
+```
+
+## Testing in Chrome
+
+### Loading Extension
+
+1. Navigate to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select `build` folder
+5. Extension should appear in toolbar
+
+### Testing Features
+
+- **Popup**: Click extension icon → verify UI
+- **Context Menu**: Right-click on text/image → verify menu items
+- **Search**: Select text → right-click → choose engine → verify results
+- **Storage**: Add/edit/delete engines → reload extension → verify persistence
+- **Tabs**: Switch between Text/Image tabs → verify scroll reset
+
+### Debugging
+
+#### Console Logs
+
+```typescript
+// Background script logs
+console.log('Created menu items:', enabledEngines.length);
+console.error('Failed to create menu:', error);
+
+// Popup logs (inspect popup)
+console.log('Engines loaded:', engines);
+console.log('Active tab:', activeTab);
+```
+
+#### Chrome DevTools
+
+- **Popup**: Right-click popup → Inspect
+- **Background**: chrome://extensions → Service Worker → Inspect
+- **Storage**: DevTools → Application → Storage → Extension Storage
+
+#### Common Issues
+
+**Context menu not appearing:**
+
+- Check background script console for errors
+- Verify engines are enabled
+- Reload extension after changes
+
+**Popup not opening:**
+
+- Check manifest.json has correct popup path
+- Verify build output includes popup files
+- Check for JavaScript errors in popup console
+
+**Storage not persisting:**
+
+- Verify chrome.storage.sync permissions
+- Check storage quota (sync storage limited to 100KB)
+- Use chrome://extensions → Storage Explorer
+
+## File Modification Guidelines
+
+### Before Creating New Files
+
+1. **Search existing files** with similar functionality
+2. **Check project structure** in README or file tree
+3. **Reuse existing patterns** instead of creating new ones
+
+### When Modifying Files
+
+1. **Read entire file** first to understand context
+2. **Preserve existing patterns** and code style
+3. **Update related files** if interfaces change
+4. **Test impact** on dependent components
+
+### Avoid Unnecessary Changes
+
+- ❌ Don't refactor working code without reason
+- ❌ Don't change design patterns mid-project
+- ❌ Don't add features not requested by user
+- ✅ Fix bugs and requested features only
+- ✅ Improve code when it solves a real problem
+
+## Search and Research
+
+### Code Search
+
+- Use `grep` for finding exact code patterns
+- Use `codebase_search` for semantic understanding
+- Search English terms (even if comments are Turkish)
+
+### External Research
+
+- **Always search in English** for better results
+- Use official documentation (Chrome, React, TypeScript)
+- Check GitHub issues for similar problems
+- Reference MDN for web APIs
+
+### Documentation Sources
+
+- [Chrome Extensions API](https://developer.chrome.com/docs/extensions/)
+- [React Docs](https://react.dev/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [TailwindCSS](https://tailwindcss.com/docs)
+
+## Version Control
+
+### Commit Messages
+
+- Use English for commit messages
+- Be descriptive and specific
+- Reference issue numbers if applicable
+
+Examples:
+
+```
+Add delete confirmation to search engine cards
+Fix scroll position not resetting on tab change
+Update README with new features
+Remove icon picker due to Chrome limitations
+```
+
+## Deployment Checklist
+
+Before releasing a new version:
+
+- [ ] All TypeScript errors resolved
+- [ ] Build completes successfully
+- [ ] Extension loads in Chrome without errors
+- [ ] All features tested manually
+- [ ] Context menus appear correctly
+- [ ] Storage persistence works
+- [ ] Dark mode displays correctly
+- [ ] Animations are smooth (no spring physics)
+- [ ] README updated with new features
+- [ ] Version number incremented in package.json
+- [ ] Build script creates valid zip file
+
+## Performance Considerations
+
+### Build Optimization
+
+- Tree-shaking removes unused code
+- Minification reduces bundle size
+- Code splitting for async components
+
+### Runtime Performance
+
+- Use `React.memo` sparingly (only when proven bottleneck)
+- Avoid inline object/array creation in render
+- Use `useCallback` for function props
+- Batch state updates when possible
+
+### Bundle Size Monitoring
+
+```bash
+# Check build output
+bun build
+
+# Look for large chunks
+ls -lh build/assets/js/
+
+# Current target: ~340KB total, ~108KB gzipped
+```
+
+## Troubleshooting Guide
+
+### Extension Won't Load
+
+1. Check manifest.json syntax
+2. Verify all referenced files exist
+3. Check for TypeScript compilation errors
+4. Look for console errors in background script
+
+### UI Not Updating
+
+1. Hard refresh popup (close and reopen)
+2. Check React DevTools for state
+3. Verify storage changes in Chrome DevTools
+4. Look for JavaScript errors in console
+
+### Context Menu Issues
+
+1. Verify background script is running
+2. Check chrome.contextMenus permissions
+3. Ensure engines are enabled
+4. Reload extension completely
+
+### Build Failures
+
+1. Clear build folder: `rm -rf build/`
+2. Reinstall dependencies: `bun install`
+3. Check TypeScript errors: `tsc --noEmit`
+4. Verify Node.js/Bun version compatibility

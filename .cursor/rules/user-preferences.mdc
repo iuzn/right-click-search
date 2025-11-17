@@ -1,0 +1,203 @@
+---
+alwaysApply: true
+description: User interaction preferences and expectations
+---
+
+# User Preferences and Interaction Patterns
+
+### Response Format
+
+- Explain what you're doing before doing it
+- Provide step-by-step analysis
+- Show code changes with context
+- Verify completion of each task
+- Confirm final results
+
+## Development Approach
+
+### Step-by-Step Methodology
+
+User expects tasks to be broken down:
+
+1. **Understand** the full requirement
+2. **Plan** the implementation approach
+3. **Execute** changes systematically
+4. **Verify** each change works
+5. **Confirm** task completion
+
+### Quality Standards
+
+- **Best Practices**: Always follow industry standards
+- **No Shortcuts**: Don't compromise on code quality
+- **Sustainable**: Build maintainable, scalable solutions
+- **Professional**: Production-ready code at all times
+
+## Design Philosophy
+
+### Vision OS Aesthetic
+
+User strongly prefers Vision OS design language:
+
+- Glassmorphism effects (backdrop-blur, translucent backgrounds)
+- Smooth, natural animations (NO spring physics)
+- Modern, premium UI elements
+- Dark mode as first-class citizen
+- Minimalist, clean interfaces
+
+### Animation Preferences
+
+- ✅ **Preferred**: Cubic-bezier easing curves
+- ✅ **Preferred**: Blur + scale + translate combinations
+- ✅ **Preferred**: 0.6s - 0.8s duration for smooth feel
+- ❌ **Avoid**: Spring animations (bouncy, unnatural)
+- ❌ **Avoid**: Abrupt transitions
+- ❌ **Avoid**: Over-animation (list entries on load, etc.)
+
+## Library and Tool Preferences
+
+### Use Existing Libraries
+
+When a feature needs to be implemented:
+
+1. **First**: Check if existing library can do it (e.g., react-confetti)
+2. **Second**: Check if project already has similar implementation
+3. **Last Resort**: Create custom implementation
+
+### Technology Choices
+
+- **React 19**: Latest features and patterns
+- **Framer Motion**: For all animations
+- **TailwindCSS**: For styling (no CSS modules)
+- **TypeScript**: Strict mode, full type safety
+- **Bun**: Preferred package manager over npm
+
+## UI/UX Expectations
+
+### User Interface Elements
+
+- **Floating Action Button**: For primary actions (add new item)
+- **Inline Editing**: No modals for simple edits
+- **Inline Confirmation**: Delete confirmations inline with ✓/✕ buttons
+- **Tab Organization**: Separate contexts clearly
+- **Hamburger Menus**: For secondary actions (import/export)
+- **Auto-focus**: New items should focus input automatically
+
+### Interaction Patterns
+
+- **No Clutter**: Keep UI clean, move secondary features to menus
+- **Smart Defaults**: New items should have sensible default values
+- **Instant Feedback**: Changes reflect immediately
+- **Scroll Management**: Reset scroll on context changes (tab switches)
+- **Layout Stability**: Prevent layout shift during animations
+
+## Feature Development Guidelines
+
+### Before Adding Features
+
+1. Check if similar functionality already exists
+2. Understand how it fits into current architecture
+3. Consider impact on existing features
+4. Plan for maintainability
+
+### Implementation Standards
+
+- Don't make root-level changes unless requested
+- Don't modify core game logic/rules without permission
+- Don't create unnecessary documentation files
+- Stay focused on requested features
+
+### Removed Features (Don't Re-implement)
+
+- ❌ Icon Picker: Chrome doesn't support custom context menu icons
+- ❌ Context Type Badges: Tabs already show this information
+- ❌ Content Script Injection: Extension only works as popup now
+- ❌ Dynamic Popup Logic: Always opens as popup, removed complexity
+
+## Chrome Extension Specifics
+
+### Manifest V3 Constraints
+
+- Use chrome.contextMenus API (not deprecated methods)
+- Storage: chrome.storage.sync for cross-device persistence
+- Permissions: Only request what's needed
+- Background: Service worker pattern (not persistent background page)
+
+### Known Chrome Limitations
+
+- **No Custom Icons**: Context menu items can't have custom icons (no emoji support)
+- **Menu Title Only**: Only text in context menu, no images
+- **Storage Quota**: Sync storage limited to 100KB total
+- **Permission Prompts**: Minimize permission requests
+
+## Testing Expectations
+
+### When Making Changes
+
+1. Build the project to check TypeScript errors
+2. Load extension in Chrome
+3. Test the specific feature changed
+4. Verify no regressions in existing features
+5. Confirm dark mode still works
+6. Check animations are smooth
+
+### Quality Assurance
+
+- No TypeScript errors (run `tsc --noEmit`)
+- Build succeeds (`bun build`)
+- Extension loads without errors
+- All features work as expected
+- UI matches Vision OS aesthetic
+- Animations use cubic-bezier (not spring)
+
+## Anti-Patterns to Avoid
+
+### Don't Do These
+
+- ❌ Create helper scripts for one-time tasks
+- ❌ Use spring animations (user dislikes bouncy effects)
+- ❌ Add icons to context menu items (Chrome limitation)
+- ❌ Keep scroll position across tab changes
+- ❌ Show context type badges (redundant with tabs)
+- ❌ Create temporary files and forget to clean up
+- ❌ Over-engineer simple solutions
+- ❌ Add features not explicitly requested
+
+### Do These Instead
+
+- ✅ Use cubic-bezier for natural easing
+- ✅ Reset scroll on tab change
+- ✅ Keep UI minimal and clean
+- ✅ Use inline editing and confirmation
+- ✅ Follow existing patterns
+- ✅ Ask before major architectural changes
+- ✅ Focus on requested features only
+
+## Feedback and Iteration
+
+### User Will Tell You
+
+- If animation easing feels wrong ("slow start, accelerate, smooth")
+- If UI is cluttered ("nonsense", "unnecessary")
+- If feature doesn't match expectations
+- If design needs adjustment
+
+### Expected Response
+
+- Listen to feedback carefully
+- Implement changes quickly
+- Don't defend poor choices
+- Iterate until user is satisfied
+- Learn from corrections for future tasks
+
+## Summary of Key Rules
+
+1. **Code and Comments in English**
+2. **Vision OS design aesthetic always**
+3. **Cubic-bezier easing, NO spring animations**
+4. **Check existing solutions before creating new ones**
+5. **Step-by-step approach for all tasks**
+6. **No unnecessary changes to working code**
+7. **Search in English for better results**
+8. **Follow best practices and industry standards**
+9. **Build sustainable, maintainable solutions**
+10. **User feedback is final - iterate until satisfied**

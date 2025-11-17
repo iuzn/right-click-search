@@ -1,0 +1,275 @@
+---
+description: TypeScript and React coding standards
+globs: *.ts,*.tsx
+---
+
+# Code Style and Best Practices
+
+Example:
+
+```typescript
+// Add new search engine
+const addEngine = async (params: CreateSearchEngineParams) => {
+  const newEngine: SearchEngine = {
+    ...params,
+    id: "custom-" + Date.now(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  await storage.set((current) => [...current, newEngine]);
+  return newEngine;
+};
+```
+
+## TypeScript Guidelines
+
+### Strict Typing
+
+- Enable strict mode in tsconfig.json
+- No `any` types - use `unknown` or proper types
+- Define interfaces for all data structures
+- Use type narrowing with type guards
+
+### Interface Definitions
+
+```typescript
+// Type definitions in separate file
+export interface SearchEngine {
+  id: string;
+  title: string;
+  url: string;
+  icon: string;
+  iconType: "emoji" | "url";
+  contexts: ContextType[];
+  enabled: boolean;
+  isDefault: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+// Partial types for updates
+export type UpdateSearchEngineParams = Partial<
+  Omit<SearchEngine, "id" | "createdAt" | "updatedAt" | "contexts">
+>;
+```
+
+### Type Imports
+
+```typescript
+// Type-only imports for interfaces
+import type { SearchEngine } from "@/types/search";
+
+// Regular imports for functions/components
+import { cn } from "@/lib/utils";
+```
+
+## React Patterns
+
+### Functional Components with TypeScript
+
+```typescript
+interface SearchEngineCardProps {
+  engine: SearchEngine;
+  onUpdate: (id: string, params: UpdateSearchEngineParams) => void;
+  onDelete: (id: string) => void;
+  onToggle: (id: string) => void;
+  isNewlyAdded?: boolean;
+}
+
+export function SearchEngineCard({
+  engine,
+  onUpdate,
+  onDelete,
+  onToggle,
+  isNewlyAdded = false,
+}: SearchEngineCardProps) {
+  // Component body
+}
+```
+
+### Hook Usage
+
+- Always use functional components with hooks
+- Custom hooks start with `use` prefix
+- Extract complex logic into custom hooks
+- Use `useEffect` for side effects only
+- Use `useState` for local component state
+- Use `useRef` for DOM references
+
+### State Management Pattern
+
+```typescript
+// Local state
+const [isEditing, setIsEditing] = useState(false);
+const [title, setTitle] = useState(engine.title);
+
+// Ref for DOM access
+const containerRef = useRef<HTMLDivElement>(null);
+
+// Effect for side effects
+useEffect(() => {
+  const scrollContainer = document.querySelector("[data-scroll-container]");
+  if (scrollContainer) {
+    scrollContainer.scrollTop = 0;
+  }
+}, [activeTab]);
+```
+
+## Chrome Extension Patterns
+
+### Storage Operations
+
+```typescript
+// Storage wrapper with type safety
+const storage = createStorage<SearchEngine[]>(
+  "search-engines-storage-key",
+  DEFAULT_SEARCH_ENGINES,
+  {
+    storageType: StorageType.Sync,
+    liveUpdate: true,
+  }
+);
+
+// CRUD operations
+await storage.set((current) => [...current, newEngine]); // Add
+await storage.set((current) =>
+  current.map((e) => (e.id === id ? { ...e, ...updates } : e))
+); // Update
+await storage.set((current) => current.filter((e) => e.id !== id)); // Delete
+```
+
+### Context Menu Management
+
+```typescript
+// Background script pattern
+class ContextMenuManager {
+  private engines: SearchEngine[] = [];
+
+  private async init() {
+    await this.loadEngines();
+    await this.createAllMenus();
+
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === "sync" && changes["search-engines-storage-key"]) {
+        this.engines = changes["search-engines-storage-key"].newValue || [];
+        this.updateAllMenus();
+      }
+    });
+  }
+
+  private createMenu(engine: SearchEngine) {
+    chrome.contextMenus.create({
+      id: engine.id,
+      title: engine.title,
+      // @ts-ignore - Chrome API type definition is very strict
+      contexts: engine.contexts,
+    });
+  }
+}
+```
+
+## File Organization
+
+### Import Order
+
+1. External libraries (React, Framer Motion, etc.)
+2. Type imports
+3. Internal utilities and configs
+4. Component imports
+5. Relative imports
+
+```typescript
+import { useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { SearchEngine, CreateSearchEngineParams } from "@/types/search";
+import { cn } from "@/lib/utils";
+import { extensionId } from "@/lib/config";
+import { SearchEngineCard } from "@/components/search/SearchEngineCard";
+```
+
+### Naming Conventions
+
+- **Components**: PascalCase (`SearchEngineCard`, `IconPicker`)
+- **Hooks**: camelCase with `use` prefix (`useSearchEngines`, `useClickOutside`)
+- **Types/Interfaces**: PascalCase (`SearchEngine`, `ContextType`)
+- **Constants**: UPPER_SNAKE_CASE (`DEFAULT_SEARCH_ENGINES`)
+- **Functions**: camelCase (`addEngine`, `handleUpdate`)
+- **Files**: kebab-case for utilities, PascalCase for components
+
+## Error Handling
+
+### Try-Catch Pattern
+
+```typescript
+try {
+  const result = await chrome.storage.sync.get(["search-engines-storage-key"]);
+  if (!result["search-engines-storage-key"]) {
+    this.engines = DEFAULT_SEARCH_ENGINES;
+  }
+} catch (error) {
+  console.error("Failed to load search engines:", error);
+  this.engines = DEFAULT_SEARCH_ENGINES;
+}
+```
+
+### Type Guards
+
+```typescript
+const isValid = data.every(
+  (item) =>
+    item.id && item.title && item.url && typeof item.enabled === "boolean"
+);
+
+if (!isValid) {
+  throw new Error("Invalid data structure in JSON file.");
+}
+```
+
+## Performance Optimization
+
+### Memoization
+
+- Use `useMemo` for expensive calculations
+- Use `useCallback` for function props
+- Use `React.memo` for component optimization (when needed)
+
+### Conditional Rendering
+
+```typescript
+// Don't render hidden content
+{isLoading ? (
+  <LoadingSpinner />
+) : (
+  <EngineList engines={filteredEngines} />
+)}
+
+// Conditional classes
+className={cn(
+  'base-classes',
+  condition && 'conditional-classes',
+  !condition && 'alternative-classes'
+)}
+```
+
+## Best Practices Summary
+
+✅ **Do:**
+
+- Use TypeScript strict mode
+- Write comments in English
+- Extract complex logic into custom hooks
+- Use functional components with hooks
+- Provide proper types for all props and state
+- Handle errors gracefully with fallbacks
+- Use const assertions for readonly data
+- Prefer composition over prop drilling
+
+❌ **Don't:**
+
+- Use `any` type
+- Mix languages in code (keep English for code and comments)
+- Create inline anonymous functions in JSX (use handlers)
+- Ignore TypeScript errors with excessive `@ts-ignore`
+- Mutate state directly
+- Use class components
+- Skip error handling

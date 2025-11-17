@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "baseUrl": ".",
+    "types": ["vite/client", "chrome"],
+    "typeRoots": ["./src/global.d.ts", "../../node_modules/@types"],
+    "outDir": "./build",
+    "paths": {
+      "@root/*": ["./*"],
+      "@/*": ["./src/*"],
+      "@rcs/shared/*": ["../../packages/shared/*"],
+      "@rcs/web/*": ["../web/src/*"],
+      "@rcs/extension/*": ["./src/*"],
+      "virtual:reload-on-update-in-background-script": ["./src/global.d.ts"],
+      "virtual:reload-on-update-in-view": ["./src/global.d.ts"]
+    }
+  },
+  "include": ["src", "utils", "vite.config.ts", "node_modules/@types"],
+  "exclude": ["node_modules"]
+}
