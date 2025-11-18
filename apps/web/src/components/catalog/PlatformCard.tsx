@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Check, Download } from "lucide-react";
 import { Platform } from "@/types/platform";
 import { cn } from "@/lib/utils";
 
@@ -38,11 +39,10 @@ export function PlatformCard({
 
   return (
     <motion.button
-      whileHover={{ y: -2 }}
       whileTap={{ scale: 0.98 }}
       onClick={onToggle}
       className={cn(
-        "group relative w-full rounded-xl border p-4 text-left transition-all",
+        "group relative w-full rounded-2xl border p-4 text-left transition-all cursor-pointer",
         selected
           ? "border-lime-500 ring-2 ring-lime-200 dark:ring-lime-900"
           : "border-border hover:border-slate-300 dark:hover:border-slate-600"
@@ -114,13 +114,15 @@ export function PlatformCard({
         )}
       </div>
 
-      {/* Select/Install indicator - Always visible when installed */}
+      {/* Select/Install indicator - Bottom right, always visible when installed */}
       {selected ? (
-        <div className="absolute right-3 top-3 rounded-md bg-lime-500 dark:bg-lime-600 px-2 py-0.5 text-xs text-white font-semibold shadow-md">
-          ✓ Installed
+        <div className="absolute right-3 bottom-3 rounded-md bg-lime-500 dark:bg-lime-600 px-2 py-1 text-xs text-white font-semibold shadow-md flex items-center gap-1">
+          <Check className="w-3 h-3" />
+          Installed
         </div>
       ) : (
-        <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-border bg-background px-2 py-0.5 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="pointer-events-none absolute right-3 bottom-3 rounded-md border border-border bg-background px-2 py-1 text-xs opacity-0 transition-opacity group-hover:opacity-100 flex items-center gap-1">
+          <Download className="w-3 h-3" />
           Install
         </div>
       )}
