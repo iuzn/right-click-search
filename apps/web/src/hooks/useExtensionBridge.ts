@@ -11,8 +11,9 @@ const ACK_TIMEOUT = 600; // ms - PLATFORM.md line 328
  */
 export function useExtensionBridge() {
   const [connected, setConnected] = useState(false);
+  const [installedEngines, setInstalledEngines] = useState<EngineInput[]>([]);
   const pending = useRef(
-    new Map<string, (ok: boolean, msg?: string) => void>()
+    new Map<string, (ok: boolean, msg?: string, data?: any) => void>()
   );
 
   // Handshake - Establish connection with extension
@@ -26,15 +27,22 @@ export function useExtensionBridge() {
       if (e.data.type === "RCS_BRIDGE_ACK") {
         setConnected(true);
         clearTimeout(timeout);
+        // Request current engines after connection
+        requestEngines();
       }
 
-      // Engine addition result
+      // Engine addition/removal result
       if (e.data.type === "RCS_RESULT") {
         const fn = pending.current.get(e.data.requestId);
         if (fn) {
-          fn(e.data.ok, e.data.message);
+          fn(e.data.ok, e.data.message, e.data.data);
           pending.current.delete(e.data.requestId);
         }
+      }
+
+      // Engine list update (real-time sync)
+      if (e.data.type === "RCS_ENGINES_UPDATE") {
+        setInstalledEngines(e.data.engines || []);
       }
     };
 
@@ -55,6 +63,45 @@ export function useExtensionBridge() {
       clearTimeout(timeout);
     };
   }, []);
+
+  // Request current engines from extension
+  const requestEngines = useCallback(() => {
+    window.postMessage(
+      {
+        type: "RCS_GET_ENGINES",
+      },
+      "*"
+    );
+  }, []);
+
+  // Get engines from extension
+  const getEngines = useCallback(
+    async (): Promise<{ ok: boolean; engines?: EngineInput[] }> => {
+      return new Promise((resolve) => {
+        const requestId = crypto.randomUUID();
+
+        pending.current.set(requestId, (ok, msg, data) =>
+          resolve({ ok, engines: data?.engines })
+        );
+
+        window.postMessage(
+          {
+            type: "RCS_GET_ENGINES",
+            requestId,
+          },
+          "*"
+        );
+
+        setTimeout(() => {
+          if (pending.current.has(requestId)) {
+            pending.current.delete(requestId);
+            resolve({ ok: false });
+          }
+        }, 2000);
+      });
+    },
+    []
+  );
 
   // Add engines to extension
   const addEngines = useCallback(
@@ -90,8 +137,44 @@ export function useExtensionBridge() {
     []
   );
 
+  // Remove engine from extension
+  const removeEngine = useCallback(
+    async (engineUrl: string): Promise<BridgeResponse> => {
+      return new Promise<BridgeResponse>((resolve) => {
+        const requestId = crypto.randomUUID();
+
+        pending.current.set(requestId, (ok, msg) =>
+          resolve({ ok, message: msg })
+        );
+
+        window.postMessage(
+          {
+            type: "RCS_REMOVE_ENGINE",
+            url: engineUrl,
+            requestId,
+          },
+          "*"
+        );
+
+        setTimeout(() => {
+          if (pending.current.has(requestId)) {
+            pending.current.delete(requestId);
+            resolve({
+              ok: false,
+              message: "Extension did not respond (timeout)",
+            });
+          }
+        }, 2000);
+      });
+    },
+    []
+  );
+
   return {
     connected,
+    installedEngines,
+    getEngines,
     addEngines,
+    removeEngine,
   };
 }

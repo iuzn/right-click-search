@@ -153,13 +153,13 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 // Message types that try to communicate with extension
-const BRIDGE_MESSAGE_TYPES = new Set(['RCS_BRIDGE_HANDSHAKE', 'RCS_ADD_ENGINES']);
+const BRIDGE_MESSAGE_TYPES = new Set(['RCS_BRIDGE_HANDSHAKE', 'RCS_ADD_ENGINES', 'RCS_GET_ENGINES', 'RCS_REMOVE_ENGINE']);
 
 // Listen for messages from web page
 window.addEventListener('message', (event) => {
   // Only accept messages from the same window
   if (event.source !== window) return;
-  
+
   const data = event.data;
   if (!data || typeof data !== 'object') return;
 
@@ -188,10 +188,37 @@ window.addEventListener('message', (event) => {
     return;
   }
 
+  // Get engines - Return current engines to web catalog
+  if (data.type === 'RCS_GET_ENGINES') {
+    console.log('📤 Catalog requesting current engines');
+
+    // Forward to background script
+    chrome.runtime.sendMessage(
+      {
+        type: 'RCS_GET_ENGINES',
+        requestId: data.requestId,
+      },
+      (response) => {
+        // Send engines back to web page
+        window.postMessage(
+          {
+            type: 'RCS_ENGINES_UPDATE',
+            engines: response?.engines || [],
+            requestId: data.requestId,
+          },
+          event.origin
+        );
+
+        console.log(`✅ Sent ${response?.engines?.length || 0} engines to catalog`);
+      }
+    );
+    return;
+  }
+
   // Add engines - Handle engines coming from web catalog
   if (data.type === 'RCS_ADD_ENGINES') {
     console.log('📥 Received engines from catalog:', data.engines);
-    
+
     // Forward to background script
     chrome.runtime.sendMessage(
       {
@@ -201,7 +228,7 @@ window.addEventListener('message', (event) => {
       },
       (response) => {
         const ok = response?.ok ?? false;
-        
+
         // Send result back to web page
         window.postMessage(
           {
@@ -212,8 +239,71 @@ window.addEventListener('message', (event) => {
           },
           event.origin
         );
-        
+
+        if (ok) {
+          // Also send updated engines list
+          chrome.runtime.sendMessage(
+            { type: 'RCS_GET_ENGINES' },
+            (enginesResponse) => {
+              window.postMessage(
+                {
+                  type: 'RCS_ENGINES_UPDATE',
+                  engines: enginesResponse?.engines || [],
+                },
+                event.origin
+              );
+            }
+          );
+        }
+
         console.log(ok ? '✅ Engines added successfully' : '❌ Failed to add engines');
+      }
+    );
+    return;
+  }
+
+  // Remove engine - Handle engine removal from web catalog
+  if (data.type === 'RCS_REMOVE_ENGINE') {
+    console.log('🗑️ Removing engine:', data.url);
+
+    // Forward to background script
+    chrome.runtime.sendMessage(
+      {
+        type: 'RCS_REMOVE_ENGINE',
+        url: data.url,
+        requestId: data.requestId,
+      },
+      (response) => {
+        const ok = response?.ok ?? false;
+
+        // Send result back to web page
+        window.postMessage(
+          {
+            type: 'RCS_RESULT',
+            requestId: data.requestId,
+            ok,
+            message: response?.message,
+          },
+          event.origin
+        );
+
+        if (ok) {
+          // Also send updated engines list
+          chrome.runtime.sendMessage(
+            { type: 'RCS_GET_ENGINES' },
+            (enginesResponse) => {
+              window.postMessage(
+                {
+                  type: 'RCS_ENGINES_UPDATE',
+                  engines: enginesResponse?.engines || [],
+                },
+                event.origin
+              );
+            }
+          );
+        }
+
+        console.log(ok ? '✅ Engine removed successfully' : '❌ Failed to remove engine');
       }
     );
   }
@@ -221,4 +311,4 @@ window.addEventListener('message', (event) => {
 
 console.log('🔌 Platform Catalog Bridge initialized');
 
-export {};
+export { };

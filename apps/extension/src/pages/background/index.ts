@@ -48,9 +48,27 @@ class ContextMenuManager {
         return;
       }
 
+      // Get engines - Return current engines list
+      if (message.type === 'RCS_GET_ENGINES') {
+        this.getEngines()
+          .then((engines) => sendResponse({ ok: true, engines }))
+          .catch((error) => sendResponse({ ok: false, engines: [] }));
+        return true; // async response
+      }
+
       // Platform Catalog Bridge - Add engines from web catalog
       if (message.type === 'RCS_ADD_ENGINES') {
         this.handleAddEngines(message.engines, message.requestId)
+          .then((result) => sendResponse(result))
+          .catch((error) =>
+            sendResponse({ ok: false, message: error.message }),
+          );
+        return true; // async response
+      }
+
+      // Platform Catalog Bridge - Remove engine from web catalog
+      if (message.type === 'RCS_REMOVE_ENGINE') {
+        this.handleRemoveEngine(message.url, message.requestId)
           .then((result) => sendResponse(result))
           .catch((error) =>
             sendResponse({ ok: false, message: error.message }),
@@ -259,7 +277,7 @@ class ContextMenuManager {
           (e) =>
             e.url === newEngine.url &&
             JSON.stringify(e.contexts.sort()) ===
-              JSON.stringify(newEngine.contexts.sort()),
+            JSON.stringify(newEngine.contexts.sort()),
         );
         if (!isDuplicate) {
           merged.push(newEngine);
@@ -289,9 +307,81 @@ class ContextMenuManager {
       };
     }
   }
+
+  /**
+   * Get current engines list (for catalog sync)
+   */
+  private async getEngines() {
+    try {
+      const result = await chrome.storage.sync.get([
+        'search-engines-storage-key',
+      ]);
+      const engines: SearchEngine[] = result['search-engines-storage-key'] || [];
+
+      // Convert to catalog format
+      const catalogEngines = engines.map((e) => ({
+        title: e.title,
+        url: e.url,
+        icon: e.icon,
+        contexts: e.contexts,
+        tags: e.tags,
+        source: e.isDefault ? 'default' : 'catalog',
+      }));
+
+      return catalogEngines;
+    } catch (error) {
+      console.error('❌ Failed to get engines:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Handle removing engine from Platform Catalog
+   */
+  private async handleRemoveEngine(engineUrl: string, requestId: string) {
+    try {
+      console.log('🗑️ Removing engine:', engineUrl);
+
+      // 1) Load existing engines
+      const result = await chrome.storage.sync.get([
+        'search-engines-storage-key',
+      ]);
+      const existing: SearchEngine[] =
+        result['search-engines-storage-key'] || [];
+
+      // 2) Filter out the engine with matching URL
+      const filtered = existing.filter((e) => e.url !== engineUrl);
+
+      if (filtered.length === existing.length) {
+        return { ok: false, message: 'Engine not found' };
+      }
+
+      // 3) Save to storage
+      await chrome.storage.sync.set({ 'search-engines-storage-key': filtered });
+
+      // 4) Update context menus
+      this.engines = filtered;
+      await this.updateAllMenus();
+
+      console.log(
+        `✅ Removed engine (${filtered.length} remaining)`,
+      );
+
+      return {
+        ok: true,
+        message: 'Engine removed successfully',
+      };
+    } catch (error: any) {
+      console.error('❌ Failed to remove engine:', error);
+      return {
+        ok: false,
+        message: error?.message || 'Unknown error',
+      };
+    }
+  }
 }
 
 // Initialize Context Menu Manager
 new ContextMenuManager();
 
-export {};
+export { };

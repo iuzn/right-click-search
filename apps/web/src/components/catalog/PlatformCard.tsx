@@ -17,6 +17,25 @@ export function PlatformCard({
   selected,
   onToggle,
 }: PlatformCardProps) {
+  // Extract domain from url_pattern for favicon
+  const getDomainFromUrl = (urlPattern: string): string => {
+    try {
+      // Replace placeholders with dummy values to create a valid URL
+      const dummyUrl = urlPattern
+        .replace("{searchTerms}", "test")
+        .replace("{url}", "test");
+      const url = new URL(dummyUrl);
+      return url.hostname;
+    } catch {
+      // If parsing fails, try to extract domain manually
+      const match = urlPattern.match(/(?:https?:\/\/)?(?:www\.)?([^\/\?]+)/);
+      return match ? match[1] : "";
+    }
+  };
+
+  const domain = getDomainFromUrl(platform.url_pattern);
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
   return (
     <motion.button
       whileHover={{ y: -2 }}
@@ -25,7 +44,7 @@ export function PlatformCard({
       className={cn(
         "group relative w-full rounded-xl border p-4 text-left transition-all",
         selected
-          ? "border-indigo-500 ring-2 ring-indigo-200 dark:ring-indigo-900"
+          ? "border-lime-500 ring-2 ring-lime-200 dark:ring-lime-900"
           : "border-border hover:border-slate-300 dark:hover:border-slate-600"
       )}
     >
@@ -37,8 +56,26 @@ export function PlatformCard({
             alt={`${platform.name} icon`}
             className="h-8 w-8 rounded-md object-cover"
           />
-        ) : (
-          <div className="h-8 w-8 rounded-md bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+        ) : domain ? (
+          <img
+            src={faviconUrl}
+            alt={`${platform.name} icon`}
+            className="h-8 w-8 rounded-md object-cover"
+            onError={(e) => {
+              // Fallback to initial letter if favicon fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = "none";
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = "flex";
+            }}
+          />
+        ) : null}
+        {/* Fallback to first letter */}
+        {!platform.icon_url && (
+          <div
+            className="h-8 w-8 rounded-md bg-gradient-to-br from-lime-400 to-lime-600 flex items-center justify-center text-white font-bold text-sm"
+            style={{ display: domain ? "none" : "flex" }}
+          >
             {platform.name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -77,10 +114,16 @@ export function PlatformCard({
         )}
       </div>
 
-      {/* Select indicator */}
-      <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-border bg-background px-2 py-0.5 text-xs opacity-0 transition-opacity group-hover:opacity-100">
-        {selected ? "✓ Selected" : "Select"}
-      </div>
+      {/* Select/Install indicator - Always visible when installed */}
+      {selected ? (
+        <div className="absolute right-3 top-3 rounded-md bg-lime-500 dark:bg-lime-600 px-2 py-0.5 text-xs text-white font-semibold shadow-md">
+          ✓ Installed
+        </div>
+      ) : (
+        <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-border bg-background px-2 py-0.5 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+          Install
+        </div>
+      )}
 
       {/* Tags (optional, shown on hover) */}
       {platform.tags && platform.tags.length > 0 && (
