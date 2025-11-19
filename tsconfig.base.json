@@ -1,12 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "target": "ES2021",
+    "lib": [
+      "ES2021",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "strictNullChecks": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "ESNext",
@@ -17,10 +22,18 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@rcs/shared/*": ["packages/shared/*"],
-      "@rcs/web/*": ["apps/web/src/*"],
-      "@rcs/extension/*": ["apps/extension/src/*"],
-      "@/*": ["./src/*"]
+      "@rcs/shared/*": [
+        "packages/shared/*"
+      ],
+      "@rcs/web/*": [
+        "apps/web/src/*"
+      ],
+      "@rcs/extension/*": [
+        "apps/extension/src/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
     },
     "incremental": true,
     "plugins": [

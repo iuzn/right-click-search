@@ -25,6 +25,7 @@
     "clean": "bun run clean:web && bun run clean:extension",
     "clean:web": "rm -rf apps/web/.next apps/web/out",
     "clean:extension": "rm -rf apps/extension/dist apps/extension/build",
+    "build:package": "bash build.sh",
     "test": "echo 'No tests configured yet'"
   },
   "devDependencies": {
