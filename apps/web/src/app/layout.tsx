@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://right-click-search.ibrahimuzun.com",
+    canonical: "https://rept.in",
   },
   openGraph: {
     title:
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     description:
       "Transform your browsing experience with powerful right-click search capabilities. Select any text or image and search across multiple engines instantly. Privacy-first Chrome extension.",
     type: "website",
-    url: "https://right-click-search.ibrahimuzun.com",
+    url: "https://rept.in",
     siteName: "Right Click Search Extension",
     locale: "en_US",
     images: [
@@ -88,7 +88,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://right-click-search.ibrahimuzun.com"),
+  metadataBase: new URL("https://rept.in"),
   verification: {
     google: "your-google-verification-code", // Replace with actual code
     // yandex: "your-yandex-verification-code",
@@ -118,7 +118,7 @@ export default function RootLayout({
     name: "Right Click Search Extension",
     description:
       "Powerful, customizable right-click search extension for Chrome. Transform any selected text or image into instant search results across multiple search engines.",
-    url: "https://right-click-search.ibrahimuzun.com",
+    url: "https://rept.in",
     applicationCategory: "BrowserApplication",
     operatingSystem: "Chrome",
     offers: {
@@ -166,7 +166,7 @@ export default function RootLayout({
         />
         <link
           rel="canonical"
-          href="https://right-click-search.ibrahimuzun.com"
+          href="https://rept.in"
         />
         <meta
           name="viewport"

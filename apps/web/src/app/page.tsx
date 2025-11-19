@@ -288,7 +288,7 @@ export default function Home() {
                     href="https://chromewebstore.google.com/detail/right-click-search/fajaapjchmhiacpbkjnkijdlhcbmccdi"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-slate-50 text-lime-700 dark:text-lime-800 rounded-xl font-semibold text-lg hover:bg-lime-50 dark:hover:bg-white transition-all transform hover:scale-105 shadow-lg"
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-slate-50 text-lime-700 dark:text-lime-800 rounded-xl font-semibold text-lg hover:bg-lime-50 dark:hover:bg-white transition-all transform hover:scale-105 hover:shadow-2xl"
                   >
                     <Download className="w-5 h-5" />
                     Install from Chrome Web Store
@@ -540,9 +540,11 @@ export default function Home() {
                   </div>
 
                   {/* Bottom Call-to-Action Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 z-20 pb-8 pt-32 bg-gradient-to-t from-background via-background/95 to-transparent">
+                  <Link
+                    href="https://chromewebstore.google.com/detail/right-click-search/fajaapjchmhiacpbkjnkijdlhcbmccdi"
+                    className="absolute bottom-0 left-0 right-0 z-20 pb-8 pt-32 bg-gradient-to-t from-background via-background/95 to-transparent">
                     <div className="text-center">
-                      <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-lime-300 via-lime-400 to-lime-500 dark:from-lime-600 dark:via-lime-500 dark:to-lime-600 text-white rounded-full font-semibold mb-4 shadow-lg drop-shadow-md">
+                      <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-lime-400 via-lime-600 to-lime-900 dark:from-lime-600 dark:via-lime-500 dark:to-lime-600 text-white rounded-full font-semibold mb-4 shadow-lg drop-shadow-md hover:opacity-90">
                         <Chrome className="w-5 h-5" />
                         Install Extension to Unlock
                       </div>
@@ -551,7 +553,7 @@ export default function Home() {
                         installing the extension
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </motion.div>
             </section>
@@ -748,7 +750,8 @@ export default function Home() {
             </div>
           </motion.section>
         </main>
-      )}
+      )
+      }
 
       {/* Footer */}
       <footer
@@ -819,6 +822,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
+    </div >
   );
 }
