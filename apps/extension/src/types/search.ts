@@ -34,6 +34,7 @@ export interface SearchEngine {
   enabled: boolean;
   isDefault: boolean;
   contexts: ContextType[];
+  tags?: string[];
   keyboardShortcut?: KeyboardShortcut;
   createdAt?: number;
   updatedAt?: number;

@@ -1,6 +1,6 @@
 {
   "name": "right-click-search-extension",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "This is a right click search extension with Vite, React, and TypeScript.",
   "scripts": {
     "build": "tsc --noEmit && vite build",
