@@ -148,8 +148,8 @@ new KeyboardShortcutManager();
 // Allowed origins - for security
 const ALLOWED_ORIGINS = new Set([
   'http://localhost:3000',
-  'https://right-click-search.ibrahimuzun.com',
-  // Add production domain here
+  'https://rept.in',
+  'https://right-click-search.ibrahimuzun.com'
 ]);
 
 // Message types that try to communicate with extension
