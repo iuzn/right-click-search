@@ -31,7 +31,7 @@ export default function AdminPlatformsPage() {
     if (!user?.email) return;
 
     setLoading(true);
-    const result = await getAllPlatforms(user.email);
+    const result = await getAllPlatforms();
     if (result.error) {
       toast.error(result.error);
     } else if (result.data) {
@@ -47,7 +47,7 @@ export default function AdminPlatformsPage() {
   const handleCreate = async (data: any) => {
     if (!user?.email) return;
 
-    const result = await createPlatform(data, user.email);
+    const result = await createPlatform(data);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -60,7 +60,7 @@ export default function AdminPlatformsPage() {
   const handleUpdate = async (data: any) => {
     if (!user?.email || !editingPlatform) return;
 
-    const result = await updatePlatform(editingPlatform.id, data, user.email);
+    const result = await updatePlatform(editingPlatform.id, data);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -74,7 +74,7 @@ export default function AdminPlatformsPage() {
     if (!user?.email) return;
     if (!confirm("Are you sure you want to delete this platform?")) return;
 
-    const result = await deletePlatform(id, user.email);
+    const result = await deletePlatform(id);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -86,7 +86,7 @@ export default function AdminPlatformsPage() {
   const handleToggleEnabled = async (id: string, currentEnabled: boolean) => {
     if (!user?.email) return;
 
-    const result = await togglePlatformEnabled(id, !currentEnabled, user.email);
+    const result = await togglePlatformEnabled(id, !currentEnabled);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -252,11 +252,10 @@ export default function AdminPlatformsPage() {
                           title={platform.enabled ? "Disable" : "Enable"}
                         >
                           <Power
-                            className={`h-4 w-4 ${
-                              platform.enabled
-                                ? "text-green-600"
-                                : "text-gray-400"
-                            }`}
+                            className={`h-4 w-4 ${platform.enabled
+                              ? "text-green-600"
+                              : "text-gray-400"
+                              }`}
                           />
                         </button>
                         <button

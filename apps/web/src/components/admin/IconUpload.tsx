@@ -29,7 +29,7 @@ export function IconUpload({
     setUploading(true);
 
     try {
-      const result = await uploadIcon(file, adminEmail);
+      const result = await uploadIcon(file);
 
       if (result.error) {
         toast.error(result.error);
@@ -56,7 +56,7 @@ export function IconUpload({
     if (!previewUrl) return;
 
     try {
-      await deleteIcon(previewUrl, adminEmail);
+      await deleteIcon(previewUrl);
       setPreviewUrl(undefined);
       onUploadComplete("");
       toast.success("Icon deleted!");

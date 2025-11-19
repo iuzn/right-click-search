@@ -15,9 +15,7 @@ export const platformSchema = z.object({
       /^[a-z0-9-]+$/,
       "Slug must contain only lowercase letters, numbers, and hyphens"
     ),
-  category: z.enum(["search", "code", "ai", "social", "shopping"], {
-    required_error: "Category is required",
-  }),
+  category: z.enum(["search", "code", "ai", "social", "shopping"]),
   url_pattern: z
     .string()
     .min(1, "URL pattern is required")
