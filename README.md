@@ -65,6 +65,25 @@ right-click-search-monorepo/
 └── .gitignore           # Unified gitignore for entire monorepo
 ```
 
+## ✨ Features
+
+### Core Functionality
+- **🔍 Right-Click Search**: Search selected text or images using custom search engines
+- **⌨️ Keyboard Shortcuts**: Quick search with customizable keyboard shortcuts
+- **🎨 Custom Engines**: Add unlimited custom search engines with emoji/image icons
+- **📦 Platform Catalog**: Browse and install pre-configured search platforms
+
+### **🔄 Bidirectional Real-Time Sync** (NEW)
+Extension and website stay in perfect sync, **in real-time**:
+- ✅ Add a platform from website → Instantly available in extension
+- ✅ Remove an engine from extension → Instantly reflected on website
+- ✅ Changes sync **automatically** across all open tabs
+- ✅ No refresh needed, fully reactive UI
+
+[Learn more about Bidirectional Sync →](docs/bidirectional-sync.md)
+
+
+
 ## 🛠️ Development Scripts
 
 ### Root Level Scripts

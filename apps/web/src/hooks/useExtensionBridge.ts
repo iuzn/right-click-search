@@ -42,7 +42,13 @@ export function useExtensionBridge() {
 
       // Engine list update (real-time sync)
       if (e.data.type === "RCS_ENGINES_UPDATE") {
-        setInstalledEngines(e.data.engines || []);
+        const timestamp = Date.now();
+        const newEngines = e.data.engines || [];
+        console.log(`[${timestamp}] 🔄 RCS_ENGINES_UPDATE received:`, newEngines.length, 'engines');
+        console.log(`[${timestamp}] 📦 Current state:`, installedEngines.length, 'engines');
+        setInstalledEngines(newEngines);
+        // Force a new reference
+        console.log(`[${timestamp}] ✅ State setter called with:`, newEngines);
       }
     };
 

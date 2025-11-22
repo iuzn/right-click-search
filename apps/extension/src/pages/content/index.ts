@@ -309,6 +309,23 @@ window.addEventListener('message', (event) => {
   }
 });
 
+// Listen for messages from background script (Extension → Website sync)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Storage changed - forward to web page
+  if (message.type === 'RCS_STORAGE_CHANGED' && message.engines) {
+    // Check if we're on an allowed origin
+    if (ALLOWED_ORIGINS.has(location.origin)) {
+      window.postMessage(
+        {
+          type: 'RCS_ENGINES_UPDATE',
+          engines: message.engines,
+        },
+        location.origin
+      );
+    }
+  }
+});
+
 console.log('🔌 Platform Catalog Bridge initialized');
 
 export { };

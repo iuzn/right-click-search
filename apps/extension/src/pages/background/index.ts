@@ -14,6 +14,8 @@ reloadOnUpdate('pages/content/style.scss');
  */
 class ContextMenuManager {
   private engines: SearchEngine[] = [];
+  private menuUpdateInProgress: boolean = false;
+  private menuUpdateQueue: Array<() => Promise<void>> = [];
 
   constructor() {
     this.init();
@@ -31,7 +33,7 @@ class ContextMenuManager {
 
     // Recreate menus when extension is installed or updated
     chrome.runtime.onInstalled.addListener(() => {
-      this.createAllMenus();
+      this.queueMenuUpdate(() => this.createAllMenus());
     });
 
     // Listen for menu clicks
@@ -81,9 +83,93 @@ class ContextMenuManager {
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === 'sync' && changes['search-engines-storage-key']) {
         this.engines = changes['search-engines-storage-key'].newValue || [];
-        this.updateAllMenus();
+        this.queueMenuUpdate(() => this.createAllMenus());
+
+        // Notify all web pages about the change (real-time sync)
+        this.notifyWebPagesOfChange();
       }
     });
+  }
+
+  /**
+   * Notify all web pages about engine changes (Extension → Website sync)
+   */
+  private async notifyWebPagesOfChange() {
+    try {
+      // Get all tabs
+      const tabs = await chrome.tabs.query({});
+
+      // Convert engines to catalog format
+      const catalogEngines = this.engines.map((e) => ({
+        title: e.title,
+        url: e.url,
+        icon: e.icon,
+        contexts: e.contexts,
+        tags: e.tags,
+        source: e.isDefault ? 'default' : 'catalog',
+      }));
+
+      // Send message to all tabs (content script will forward to web page)
+      for (const tab of tabs) {
+        if (tab.id) {
+          chrome.tabs.sendMessage(
+            tab.id,
+            {
+              type: 'RCS_STORAGE_CHANGED',
+              engines: catalogEngines,
+            },
+            // Ignore errors (tab might not have content script)
+            () => {
+              if (chrome.runtime.lastError) {
+                // Silently ignore - tab might not have our content script
+              }
+            }
+          );
+        }
+      }
+
+      console.log(`🔄 Notified ${tabs.length} tabs about engine changes`);
+    } catch (error) {
+      console.error('Failed to notify web pages:', error);
+    }
+  }
+
+  /**
+   * Queue menu update to prevent duplicate ID errors
+   */
+  private async queueMenuUpdate(updateFn: () => Promise<void>) {
+    return new Promise<void>((resolve) => {
+      this.menuUpdateQueue.push(async () => {
+        await updateFn();
+        resolve();
+      });
+
+      this.processMenuUpdateQueue();
+    });
+  }
+
+  /**
+   * Process queued menu updates sequentially
+   */
+  private async processMenuUpdateQueue() {
+    if (this.menuUpdateInProgress || this.menuUpdateQueue.length === 0) {
+      return;
+    }
+
+    this.menuUpdateInProgress = true;
+
+    while (this.menuUpdateQueue.length > 0) {
+      const updateFn = this.menuUpdateQueue.shift();
+      if (updateFn) {
+        try {
+          await updateFn();
+        } catch (error) {
+          console.error('Menu update failed:', error);
+        }
+      }
+    }
+
+    this.menuUpdateInProgress = false;
   }
 
   /**
@@ -190,12 +276,7 @@ class ContextMenuManager {
     }
   }
 
-  /**
-   * Update all menus
-   */
-  private async updateAllMenus() {
-    await this.createAllMenus();
-  }
+
 
   /**
    * Handle menu click event
@@ -289,7 +370,7 @@ class ContextMenuManager {
 
       // 6) Update context menus
       this.engines = merged;
-      await this.updateAllMenus();
+      await this.queueMenuUpdate(() => this.createAllMenus());
 
       console.log(
         `✅ Added ${newEngines.length} engines (${merged.length} total)`,
@@ -361,7 +442,7 @@ class ContextMenuManager {
 
       // 4) Update context menus
       this.engines = filtered;
-      await this.updateAllMenus();
+      await this.queueMenuUpdate(() => this.createAllMenus());
 
       console.log(
         `✅ Removed engine (${filtered.length} remaining)`,

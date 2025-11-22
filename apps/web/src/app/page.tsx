@@ -79,12 +79,6 @@ export default function Home() {
     }
   }, [connected]);
 
-  // Debug: Log installed engines
-  useEffect(() => {
-    console.log("🔌 Extension connected:", connected);
-    console.log("📦 Installed engines:", installedEngines);
-  }, [connected, installedEngines]);
-
   // Catalog state management
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
@@ -112,6 +106,16 @@ export default function Home() {
   const isPlatformInstalled = useCallback((platformUrl: string) => {
     return installedEngines.some(engine => engine.url === platformUrl);
   }, [installedEngines]);
+
+  // Custom engines: created in extension but not in database
+  const customEngines = useMemo(() => {
+    return installedEngines.filter(engine => {
+      return !platforms.some(platform => {
+        const platformEngine = mapPlatformsToEngines([platform])[0];
+        return platformEngine.url === engine.url;
+      });
+    });
+  }, [installedEngines, platforms]);
 
   // Toggle platform install/uninstall
   const togglePlatform = async (platform: typeof platforms[0]) => {
@@ -709,6 +713,55 @@ export default function Home() {
                 </motion.ul>
               )}
             </>
+          )}
+
+          {/* Custom Search Engines */}
+          {connected && customEngines.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold mb-4">Your Custom Search Engines</h2>
+              <p className="text-muted-foreground text-sm mb-6">
+                Custom search engines you created in the extension. Manage them from the extension popup.
+              </p>
+
+              <motion.ul
+                className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
+                variants={stagger}
+                initial="initial"
+                animate="animate"
+              >
+                {customEngines.map((engine) => {
+                  const customPlatform: typeof platforms[0] = {
+                    id: engine.url,
+                    slug: engine.title.toLowerCase().replace(/\s+/g, '-'),
+                    name: engine.title,
+                    url_pattern: engine.url,
+                    context: engine.contexts as any,
+                    icon_url: engine.icon && engine.icon.startsWith('http') ? engine.icon : null,
+                    category: 'search',
+                    tags: engine.tags || [],
+                    featured: false,
+                    supports_prefill: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  };
+
+                  return (
+                    <motion.li key={engine.url} variants={fadeInUp}>
+                      <div className="relative">
+                        <PlatformCard
+                          platform={customPlatform}
+                          selected={true}
+                          onToggle={() => { }}
+                        />
+                        <div className="absolute top-2 right-2 rounded-md bg-purple-500 dark:bg-purple-600 px-2 py-0.5 text-xs text-white font-semibold shadow-md">
+                          Custom
+                        </div>
+                      </div>
+                    </motion.li>
+                  );
+                })}
+              </motion.ul>
+            </div>
           )}
 
           {/* GitHub Contribution CTA */}
