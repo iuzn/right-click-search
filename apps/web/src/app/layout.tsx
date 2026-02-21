@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FirebaseProvider } from "@/components/firebase-provider";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -210,6 +211,7 @@ export default function RootLayout({
             <Toaster richColors position="bottom-right" />
           </ThemeProvider>
         </FirebaseProvider>
+        <Analytics />
       </body>
     </html>
   );
