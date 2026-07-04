@@ -25,70 +25,57 @@ class ContextMenuManager {
    * Initialize the manager
    */
   private async init() {
-    // Load settings from storage
-    await this.loadEngines();
-
-    // Create menus on initial startup
-    await this.createAllMenus();
-
-    // Recreate menus when extension is installed or updated
     chrome.runtime.onInstalled.addListener(() => {
       this.queueMenuUpdate(() => this.createAllMenus());
     });
 
-    // Listen for menu clicks
     chrome.contextMenus.onClicked.addListener((info, tab) => {
       this.handleMenuClick(info, tab);
     });
 
-    // Listen for messages from content script
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      // Open search tab
       if (message.action === 'openSearchTab' && message.url) {
         chrome.tabs.create({ url: message.url });
         sendResponse({ success: true });
         return;
       }
 
-      // Get engines - Return current engines list
       if (message.type === 'RCS_GET_ENGINES') {
         this.getEngines()
           .then((engines) => sendResponse({ ok: true, engines }))
           .catch((error) => sendResponse({ ok: false, engines: [] }));
-        return true; // async response
+        return true;
       }
 
-      // Platform Catalog Bridge - Add engines from web catalog
       if (message.type === 'RCS_ADD_ENGINES') {
         this.handleAddEngines(message.engines, message.requestId)
           .then((result) => sendResponse(result))
           .catch((error) =>
             sendResponse({ ok: false, message: error.message }),
           );
-        return true; // async response
+        return true;
       }
 
-      // Platform Catalog Bridge - Remove engine from web catalog
       if (message.type === 'RCS_REMOVE_ENGINE') {
         this.handleRemoveEngine(message.url, message.requestId)
           .then((result) => sendResponse(result))
           .catch((error) =>
             sendResponse({ ok: false, message: error.message }),
           );
-        return true; // async response
+        return true;
       }
     });
 
-    // Listen for storage changes
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === 'sync' && changes['search-engines-storage-key']) {
         this.engines = changes['search-engines-storage-key'].newValue || [];
         this.queueMenuUpdate(() => this.createAllMenus());
-
-        // Notify all web pages about the change (real-time sync)
         this.notifyWebPagesOfChange();
       }
     });
+
+    await this.loadEngines();
+    await this.createAllMenus();
   }
 
   /**
